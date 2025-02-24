@@ -266,15 +266,6 @@ function drawCone() {
     ctx.restore();
 }
 
-// Draw melting bar
-function drawMeltBar() {
-    ctx.fillStyle = '#FFB6C1';
-    ctx.fillRect(10, canvas.height - 30, (meltTime / maxMeltTime) * 200, 20);
-    ctx.strokeStyle = '#FF69B4';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(10, canvas.height - 30, 200, 20);
-}
-
 // Game loop
 function update() {
     if (gameOver) return;
@@ -283,7 +274,7 @@ function update() {
     updatePosition();
 
     // Melting mechanic (slower)
-    meltTime -= 0.05; // Reduced from 0.1
+    meltTime -= 0.05;
     scoopSize = minScoopSize + (meltTime / maxMeltTime) * (60 - minScoopSize);
     const meltPercent = Math.floor((1 - meltTime / maxMeltTime) * 100);
     meltPercentDisplay.textContent = `Melted: ${meltPercent}%`;
@@ -331,7 +322,6 @@ function update() {
     drawCone();
     sprinkles.forEach(sprinkle => sprinkle.draw());
     suns.forEach(sun => sun.draw());
-    drawMeltBar();
 
     requestAnimationFrame(update);
 }
