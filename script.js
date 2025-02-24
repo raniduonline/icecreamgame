@@ -25,6 +25,87 @@ let keys = {};
 document.addEventListener('keydown', (e) => keys[e.key] = true);
 document.addEventListener('keyup', (e) => keys[e.key] = false);
 
+// Mobile control variables
+let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let touchControls = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
+};
+
+// Canvas scaling
+function resizeCanvas() {
+    const container = document.querySelector('.game-container');
+    const containerWidth = container.clientWidth - 40; // Account for padding
+    const scale = containerWidth / canvas.width;
+    
+    if (scale < 1) {
+        canvas.style.width = containerWidth + 'px';
+        canvas.style.height = (canvas.height * scale) + 'px';
+    } else {
+        canvas.style.width = '';
+        canvas.style.height = '';
+    }
+}
+
+// Mobile controls setup
+function setupMobileControls() {
+    const buttons = {
+        'up-btn': 'up',
+        'down-btn': 'down',
+        'left-btn': 'left',
+        'right-btn': 'right'
+    };
+
+    for (let btnId in buttons) {
+        const btn = document.getElementById(btnId);
+        const direction = buttons[btnId];
+        
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchControls[direction] = true;
+        });
+        
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchControls[direction] = false;
+        });
+    }
+}
+
+// Update movement logic to include touch controls
+function updatePosition() {
+    if (keys.ArrowLeft || touchControls.left) coneX -= coneSpeed;
+    if (keys.ArrowRight || touchControls.right) coneX += coneSpeed;
+    if (keys.ArrowUp || touchControls.up) coneY -= coneSpeed;
+    if (keys.ArrowDown || touchControls.down) coneY += coneSpeed;
+    
+    // Keep the cone within bounds
+    coneX = Math.max(coneSize/2, Math.min(canvas.width - coneSize/2, coneX));
+    coneY = Math.max(coneSize/2, Math.min(canvas.height - coneSize/2, coneY));
+}
+
+// Initialize mobile features
+window.addEventListener('load', () => {
+    resizeCanvas();
+    if (isMobile) {
+        setupMobileControls();
+    }
+});
+
+window.addEventListener('resize', resizeCanvas);
+
+// Prevent default touch behaviors
+document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+// Update your game over handling
+gameOverDisplay.addEventListener('click', resetGame);
+gameOverDisplay.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    resetGame();
+});
+
 // Sprinkle class
 class Sprinkle {
     constructor(x, y) {
@@ -199,14 +280,7 @@ function update() {
     if (gameOver) return;
 
     // Move cone
-    if (keys['ArrowUp']) coneY -= coneSpeed;
-    if (keys['ArrowDown']) coneY += coneSpeed;
-    if (keys['ArrowLeft']) coneX -= coneSpeed;
-    if (keys['ArrowRight']) coneX += coneSpeed;
-
-    // Keep cone in bounds
-    coneX = Math.max(coneSize / 2, Math.min(canvas.width - coneSize / 2, coneX));
-    coneY = Math.max(coneSize / 2, Math.min(canvas.height - coneSize / 2, coneY));
+    updatePosition();
 
     // Melting mechanic (slower)
     meltTime -= 0.05; // Reduced from 0.1
@@ -286,3 +360,20 @@ document.addEventListener('keydown', (e) => {
 for (let i = 0; i < maxSprinkles; i++) spawnSprinkle();
 for (let i = 0; i < maxSuns; i++) spawnSun();
 update();
+
+function resetGame() {
+    score = 0;
+    meltTime = maxMeltTime;
+    scoopSize = 60;
+    coneX = canvas.width / 2;
+    coneY = canvas.height / 2;
+    sprinkles = [];
+    suns = [];
+    for (let i = 0; i < maxSprinkles; i++) spawnSprinkle();
+    for (let i = 0; i < maxSuns; i++) spawnSun();
+    gameOver = false;
+    gameOverDisplay.style.display = 'none';
+    scoreDisplay.textContent = `Score: ${score}`;
+    meltPercentDisplay.textContent = `Melted: 0%`;
+    update();
+}
