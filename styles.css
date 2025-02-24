@@ -1,40 +1,421 @@
+/* Game container and general styling */
 body {
     margin: 0;
-    overflow: hidden;
-    background: linear-gradient(to bottom, #FFB6C1, #87CEEB, #E0FFFF); /* Pastel pink to sky blue to light cyan */
+    min-height: 100vh;
+    padding: 100px 20px 20px; /* Add top padding to prevent cutoff */
+    background: repeating-linear-gradient(
+        45deg,
+        #FFE4E1 0px,
+        #FFE4E1 20px,
+        #FFF0F5 20px,
+        #FFF0F5 40px
+    ); /* Waffle pattern background */
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    font-family: 'Comic Sans MS', 'Arial', sans-serif; /* Kid-friendly font */
+    box-sizing: border-box;
 }
+
+.game-container {
+    position: relative;
+    padding: 20px;
+    margin-top: 60px; /* Add margin to push container down */
+    background: linear-gradient(135deg, #FFF8DC, #FFEFD5); /* Lighter warm colors */
+    border-radius: 25px;
+    box-shadow: 
+        0 0 20px rgba(255, 182, 193, 0.5),
+        inset 0 0 50px rgba(255, 248, 220, 0.5);
+    border: 8px solid #DEB887; /* Lighter border */
+    /* Waffle cone texture */
+    background-image: 
+        repeating-linear-gradient(45deg, 
+            transparent,
+            transparent 10px,
+            rgba(222, 184, 135, 0.1) 10px,
+            rgba(222, 184, 135, 0.1) 20px
+        );
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 #gameCanvas {
-    border: 4px solid #FFD700; /* Golden border like a waffle cone */
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="rgba(255, 255, 255, 0.8)"/><path d="M0 0L100 100M100 0L0 100" stroke="rgba(173, 216, 230, 0.5)" stroke-width="10"/></svg>') repeat; /* Frosty crisscross pattern */
-    box-shadow: 0 0 20px rgba(255, 182, 193, 0.5); /* Soft pink glow */
+    border: 6px solid #FFD700; /* Golden border */
+    border-radius: 15px;
+    background: #FFF5EE; /* Light cream base */
+    background-image: 
+        linear-gradient(45deg, 
+            rgba(222, 184, 135, 0.15) 25%, 
+            transparent 25%,
+            transparent 75%,
+            rgba(222, 184, 135, 0.15) 75%
+        ),
+        linear-gradient(45deg,
+            rgba(222, 184, 135, 0.15) 25%,
+            transparent 25%,
+            transparent 75%,
+            rgba(222, 184, 135, 0.15) 75%
+        ),
+        repeating-linear-gradient(45deg,
+            rgba(255, 248, 220, 0.3) 0px,
+            rgba(255, 248, 220, 0.3) 2px,
+            rgba(222, 184, 135, 0.1) 2px,
+            rgba(222, 184, 135, 0.1) 4px
+        );
+    background-position: 0 0, 20px 20px;
+    background-size: 40px 40px, 40px 40px, 4px 4px;
+    box-shadow: 
+        0 0 20px rgba(255, 182, 193, 0.5),
+        inset 0 0 50px rgba(255, 248, 220, 0.5);
+    max-width: 100%;
+    height: auto;
 }
-#score, #meltPercent, #gameOver {
+
+/* Add the game title styling */
+.game-title {
     position: absolute;
-    color: #FF69B4; /* Hot pink text */
-    font-size: 28px;
-    text-shadow: 2px 2px 4px #FFFFFF, -1px -1px 2px #000000; /* White glow with black outline */
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    font-family: 'Righteous', cursive;
+    font-size: 48px;
+    color: #FF1493;
+    text-shadow: 
+        3px 3px 0 #FFF,
+        -3px -3px 0 #FFF,
+        3px -3px 0 #FFF,
+        -3px 3px 0 #FFF,
+        0 0 20px rgba(255, 20, 147, 0.5);
+    white-space: nowrap;
+    z-index: 10;
 }
+
+/* Add decorative ice creams and sprinkles to header */
+.game-title::before,
+.game-title::after {
+    content: "🍦";
+    position: absolute;
+    font-size: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.game-title::before {
+    left: -60px;
+    transform: translateY(-50%) rotate(-15deg);
+}
+
+.game-title::after {
+    right: -60px;
+    transform: translateY(-50%) rotate(15deg);
+}
+
+/* Remove the float animation and update the decorative elements */
+.game-container::before,
+.game-container::after {
+    display: none;
+}
+
+/* Remove all sprinkle border related styles */
+.game-container::before,
+.game-container::after {
+    display: none;
+}
+
+.sprinkle-border {
+    display: none;
+}
+
+/* Score and melt displays */
+#score, #meltPercent {
+    position: absolute;
+    top: -100px;
+    color: #FF69B4;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 
+        2px 2px 0 #FFF,
+        -2px -2px 0 #FFF,
+        2px -2px 0 #FFF,
+        -2px 2px 0 #FFF;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    border: 3px solid #FFB6C1;
+    box-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
+    z-index: 10;
+    white-space: nowrap;
+}
+
 #score {
-    top: 10px;
-    left: 10px;
+    right: calc(50% + 260px); /* Position relative to center */
 }
+
 #meltPercent {
-    top: 50px;
-    left: 10px;
+    left: calc(50% + 260px); /* Position relative to center */
 }
+
+/* Game over display */
 #gameOver {
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     display: none;
     font-size: 40px;
+    font-weight: bold;
     text-align: center;
-    background: rgba(255, 228, 225, 0.8); /* Light pink semi-transparent bg */
-    padding: 20px;
-    border-radius: 15px;
-    border:
+    color: #FF1493;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px 50px;
+    border-radius: 25px;
+    border: 6px solid #FF69B4;
+    box-shadow: 
+        0 0 30px rgba(255, 105, 180, 0.6),
+        inset 0 0 20px rgba(255, 182, 193, 0.5);
+    animation: pulse 1.5s infinite;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Sprinkle animations */
+.sprinkle-burst {
+    position: absolute;
+    pointer-events: none;
+    animation: burst 0.5s ease-out forwards;
+}
+
+@keyframes burst {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+/* Mobile Controls */
+#mobile-controls {
+    display: none;
+    width: 100%;
+    max-width: 300px;
+    margin: 20px auto 0;
+    text-align: center;
+}
+
+.control-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+#mobile-controls button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 105, 180, 0.8);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#mobile-controls button:active {
+    transform: scale(0.95);
+    background: rgba(255, 20, 147, 0.9);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    #score {
+        right: calc(50% + 220px);
+    }
+    
+    #meltPercent {
+        left: calc(50% + 220px);
+    }
+}
+
+@media (max-width: 850px) {
+    body {
+        padding: 80px 10px 20px; /* Adjust padding for smaller screens */
+    }
+
+    .game-container {
+        margin-top: 40px;
+    }
+
+    .game-title {
+        font-size: 36px;
+        top: -80px;
+    }
+
+    #score, #meltPercent {
+        font-size: 20px;
+        top: -80px;
+        padding: 8px 15px;
+    }
+
+    #score {
+        right: calc(50% + 180px);
+    }
+    
+    #meltPercent {
+        left: calc(50% + 180px);
+    }
+
+    #mobile-controls {
+        display: block;
+    }
+
+    .game-title::before,
+    .game-title::after {
+        font-size: 32px;
+    }
+
+    .game-title::before {
+        left: -50px;
+    }
+
+    .game-title::after {
+        right: -50px;
+    }
+
+    .game-container::before,
+    .game-container::after {
+        font-size: 20px;
+        letter-spacing: 15px;
+    }
+
+    .sprinkle-border {
+        font-size: 14px;
+        letter-spacing: 6px;
+    }
+
+    .sprinkle-border.corner {
+        font-size: 16px;
+        letter-spacing: 3px;
+    }
+}
+
+@media (max-width: 600px) {
+    .game-title {
+        font-size: 28px;
+        top: -70px;
+    }
+
+    #score, #meltPercent {
+        font-size: 16px;
+        top: -70px;
+        padding: 6px 12px;
+    }
+
+    #score {
+        right: calc(50% + 150px);
+    }
+    
+    #meltPercent {
+        left: calc(50% + 150px);
+    }
+
+    .game-title::before,
+    .game-title::after {
+        font-size: 24px;
+    }
+
+    .game-title::before {
+        left: -40px;
+    }
+
+    .game-title::after {
+        right: -40px;
+    }
+
+    .game-container::before,
+    .game-container::after {
+        font-size: 16px;
+        letter-spacing: 10px;
+    }
+
+    .sprinkle-border {
+        font-size: 12px;
+        letter-spacing: 4px;
+    }
+
+    .sprinkle-border.corner {
+        font-size: 14px;
+        letter-spacing: 2px;
+    }
+}
+
+@media (max-width: 500px) {
+    body {
+        padding: 60px 10px 20px;
+    }
+
+    .game-container {
+        margin-top: 30px;
+    }
+
+    .game-title {
+        font-size: 24px;
+        top: -120px;
+    }
+
+    #score, #meltPercent {
+        font-size: 14px;
+    }
+
+    #score {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        top: -160px;
+    }
+    
+    #meltPercent {
+        left: 50%;
+        transform: translateX(-50%);
+        top: -190px;
+    }
+
+    #gameOver {
+        font-size: 30px;
+        padding: 20px 30px;
+    }
+
+    .game-container::before {
+        top: -140px;
+    }
+
+    .game-container::after {
+        top: -170px;
+    }
+
+    .sprinkle-border {
+        font-size: 12px;
+        letter-spacing: 4px;
+    }
+
+    .sprinkle-border.corner {
+        font-size: 14px;
+        letter-spacing: 2px;
+    }
+}
+
+/* Prevent scrolling while touching the game */
+@media (touch-enabled), (hover: none) {
+    body {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+    }
+}
