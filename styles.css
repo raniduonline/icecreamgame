@@ -225,6 +225,7 @@ body {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    user-select: none;
 }
 
 #mobile-controls button:active {
@@ -245,11 +246,20 @@ body {
 
 @media (max-width: 850px) {
     body {
-        padding: 80px 10px 20px; /* Adjust padding for smaller screens */
+        padding: 60px 10px 20px;
     }
 
     .game-container {
-        margin-top: 40px;
+        margin-top: 30px;
+        padding: 15px;
+    }
+
+    #gameCanvas {
+        border-width: 4px;
+    }
+
+    #mobile-controls {
+        display: block;
     }
 
     .game-title {
@@ -269,10 +279,6 @@ body {
     
     #meltPercent {
         left: calc(50% + 180px);
-    }
-
-    #mobile-controls {
-        display: block;
     }
 
     .game-title::before,
@@ -357,11 +363,16 @@ body {
 
 @media (max-width: 500px) {
     body {
-        padding: 60px 10px 20px;
+        padding: 40px 5px 10px;
     }
 
     .game-container {
-        margin-top: 30px;
+        margin-top: 20px;
+        padding: 10px;
+    }
+
+    #gameCanvas {
+        border-width: 3px;
     }
 
     .game-title {
@@ -408,14 +419,25 @@ body {
         font-size: 14px;
         letter-spacing: 2px;
     }
+
+    #mobile-controls button {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
 }
 
-/* Prevent scrolling while touching the game */
+/* Prevent unwanted touch behaviors */
 @media (touch-enabled), (hover: none) {
     body {
         overflow: hidden;
         position: fixed;
         width: 100%;
         height: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #gameCanvas {
+        touch-action: none;
     }
 }

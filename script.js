@@ -22,8 +22,11 @@ let gameOver = false;
 
 // Input handling
 let keys = {};
-document.addEventListener('keydown', (e) => keys[e.key] = true);
-document.addEventListener('keyup', (e) => keys[e.key] = false);
+let isDragging = false;
+let lastX = 0;
+let lastY = 0;
+let touchStartX = 0;
+let touchStartY = 0;
 
 // Mobile control variables
 let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -34,64 +37,119 @@ let touchControls = {
     right: false
 };
 
-// Canvas scaling
+// Update the input handling
+function initializeControls() {
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => keys[e.key] = true);
+    document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+    // Mouse controls
+    canvas.addEventListener('mousedown', startDragging);
+    document.addEventListener('mousemove', handleDragging);
+    document.addEventListener('mouseup', stopDragging);
+
+    // Touch controls
+    canvas.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    // Mobile control buttons
+    document.getElementById('up-btn').addEventListener('touchstart', () => touchControls.up = true);
+    document.getElementById('down-btn').addEventListener('touchstart', () => touchControls.down = true);
+    document.getElementById('left-btn').addEventListener('touchstart', () => touchControls.left = true);
+    document.getElementById('right-btn').addEventListener('touchstart', () => touchControls.right = true);
+
+    document.getElementById('up-btn').addEventListener('touchend', () => touchControls.up = false);
+    document.getElementById('down-btn').addEventListener('touchend', () => touchControls.down = false);
+    document.getElementById('left-btn').addEventListener('touchend', () => touchControls.left = false);
+    document.getElementById('right-btn').addEventListener('touchend', () => touchControls.right = false);
+}
+
+function startDragging(e) {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+}
+
+function handleDragging(e) {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - lastX;
+    const deltaY = e.clientY - lastY;
+    
+    coneX += deltaX;
+    coneY += deltaY;
+    
+    // Keep cone in bounds
+    coneX = Math.max(coneSize/2, Math.min(canvas.width - coneSize/2, coneX));
+    coneY = Math.max(coneSize/2, Math.min(canvas.height - coneSize/2, coneY));
+    
+    lastX = e.clientX;
+    lastY = e.clientY;
+}
+
+function stopDragging() {
+    isDragging = false;
+}
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    isDragging = true;
+}
+
+function handleTouchMove(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+    
+    coneX += deltaX;
+    coneY += deltaY;
+    
+    // Keep cone in bounds
+    coneX = Math.max(coneSize/2, Math.min(canvas.width - coneSize/2, coneX));
+    coneY = Math.max(coneSize/2, Math.min(canvas.height - coneSize/2, coneY));
+    
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}
+
+function handleTouchEnd() {
+    isDragging = false;
+}
+
+// Update the canvas size based on screen size
 function resizeCanvas() {
     const container = document.querySelector('.game-container');
     const containerWidth = container.clientWidth - 40; // Account for padding
-    const scale = containerWidth / canvas.width;
+    const containerHeight = window.innerHeight * 0.6; // 60% of viewport height
     
-    if (scale < 1) {
-        canvas.style.width = containerWidth + 'px';
-        canvas.style.height = (canvas.height * scale) + 'px';
-    } else {
-        canvas.style.width = '';
-        canvas.style.height = '';
-    }
-}
-
-// Mobile controls setup
-function setupMobileControls() {
-    const buttons = {
-        'up-btn': 'up',
-        'down-btn': 'down',
-        'left-btn': 'left',
-        'right-btn': 'right'
-    };
-
-    for (let btnId in buttons) {
-        const btn = document.getElementById(btnId);
-        const direction = buttons[btnId];
-        
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            touchControls[direction] = true;
-        });
-        
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            touchControls[direction] = false;
-        });
-    }
-}
-
-// Update movement logic to include touch controls
-function updatePosition() {
-    if (keys.ArrowLeft || touchControls.left) coneX -= coneSpeed;
-    if (keys.ArrowRight || touchControls.right) coneX += coneSpeed;
-    if (keys.ArrowUp || touchControls.up) coneY -= coneSpeed;
-    if (keys.ArrowDown || touchControls.down) coneY += coneSpeed;
+    // Calculate new dimensions maintaining aspect ratio
+    const aspectRatio = canvas.width / canvas.height;
+    let newWidth = containerWidth;
+    let newHeight = containerWidth / aspectRatio;
     
-    // Keep the cone within bounds
-    coneX = Math.max(coneSize/2, Math.min(canvas.width - coneSize/2, coneX));
-    coneY = Math.max(coneSize/2, Math.min(canvas.height - coneSize/2, coneY));
+    // If height is too large, scale based on height instead
+    if (newHeight > containerHeight) {
+        newHeight = containerHeight;
+        newWidth = containerHeight * aspectRatio;
+    }
+    
+    canvas.style.width = `${newWidth}px`;
+    canvas.style.height = `${newHeight}px`;
 }
 
-// Initialize mobile features
+// Initialize controls and handle resize
 window.addEventListener('load', () => {
+    initializeControls();
     resizeCanvas();
-    if (isMobile) {
-        setupMobileControls();
-    }
+    resetGame();
+    requestAnimationFrame(update);
 });
 
 window.addEventListener('resize', resizeCanvas);
@@ -106,123 +164,174 @@ gameOverDisplay.addEventListener('touchend', (e) => {
     resetGame();
 });
 
-// Sprinkle class
+// Sprinkle class with multiple shapes
 class Sprinkle {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = 15;
-        this.speedX = (Math.random() - 0.5) * 4;
-        this.speedY = (Math.random() - 0.5) * 4;
-        this.eaten = false;
+        this.size = 20;
         this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.eaten = false;
         this.burstTime = 0;
-        this.shape = ['heart', 'star', 'circle', 'square', 'hexagon', 'rectangle', 'clover'][Math.floor(Math.random() * 7)];
+        this.shape = Math.floor(Math.random() * 4); // 0: cross, 1: star, 2: circle, 3: heart
+        this.rotation = Math.random() * Math.PI * 2;
     }
+
     update() {
         if (this.eaten) {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            this.size -= 0.5;
-            this.burstTime += 1;
+            this.burstTime++;
+            this.size -= 1;
         }
+        this.rotation += 0.02;
     }
+
     draw() {
-        if (this.size <= 0) return;
         ctx.save();
         ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
         ctx.fillStyle = this.color;
-        ctx.beginPath();
-        switch (this.shape) {
-            case 'heart':
-                const s = this.size / 2;
-                ctx.moveTo(0, s);
-                ctx.bezierCurveTo(-s * 1.5, -s, -s, -s * 1.5, 0, -s * 2);
-                ctx.bezierCurveTo(s, -s * 1.5, s * 1.5, -s, 0, s);
+
+        switch(this.shape) {
+            case 0: // Cross
+                ctx.fillRect(-this.size / 2, -this.size / 6, this.size, this.size / 3);
+                ctx.fillRect(-this.size / 6, -this.size / 2, this.size / 3, this.size);
                 break;
-            case 'star':
-                for (let i = 0; i < 5; i++) {
-                    ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * this.size, -Math.sin((18 + i * 72) * Math.PI / 180) * this.size);
-                    ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * this.size * 0.5, -Math.sin((54 + i * 72) * Math.PI / 180) * this.size * 0.5);
+            
+            case 1: // Star
+                const spikes = 5;
+                const outerRadius = this.size / 2;
+                const innerRadius = this.size / 4;
+                
+                ctx.beginPath();
+                for(let i = 0; i < spikes * 2; i++) {
+                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                    const angle = (i * Math.PI) / spikes;
+                    if(i === 0) {
+                        ctx.moveTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+                    } else {
+                        ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+                    }
                 }
                 ctx.closePath();
+                ctx.fill();
                 break;
-            case 'circle':
-                ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
-                break;
-            case 'square':
-                ctx.rect(-this.size / 2, -this.size / 2, this.size, this.size);
-                break;
-            case 'hexagon':
-                for (let i = 0; i < 6; i++) {
-                    ctx.lineTo(Math.cos(i * Math.PI / 3) * this.size / 2, Math.sin(i * Math.PI / 3) * this.size / 2);
-                }
-                ctx.closePath();
-                break;
-            case 'rectangle':
-                ctx.rect(-this.size / 2, -this.size / 4, this.size, this.size / 2);
-                break;
-            case 'clover':
-                for (let i = 0; i < 3; i++) {
-                    ctx.arc(Math.cos(i * 2 * Math.PI / 3) * this.size / 3, Math.sin(i * 2 * Math.PI / 3) * this.size / 3, this.size / 3, 0, Math.PI * 2);
+            
+            case 2: // Circle with dots
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size / 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add smaller dots around
+                for(let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI * 2) / 6;
+                    const dotX = Math.cos(angle) * (this.size / 2);
+                    const dotY = Math.sin(angle) * (this.size / 2);
+                    
+                    ctx.beginPath();
+                    ctx.arc(dotX, dotY, this.size / 8, 0, Math.PI * 2);
+                    ctx.fill();
                 }
                 break;
+            
+            case 3: // Heart
+                const heartSize = this.size / 2;
+                ctx.beginPath();
+                ctx.moveTo(0, heartSize / 2);
+                ctx.bezierCurveTo(
+                    heartSize / 2, 0,
+                    heartSize, heartSize / 2,
+                    0, heartSize
+                );
+                ctx.bezierCurveTo(
+                    -heartSize, heartSize / 2,
+                    -heartSize / 2, 0,
+                    0, heartSize / 2
+                );
+                ctx.fill();
+                break;
         }
-        ctx.fill();
-        ctx.closePath();
-        if (this.eaten && this.burstTime < 10) {
-            ctx.beginPath();
-            ctx.arc(0, 0, this.burstTime * 2, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${1 - this.burstTime / 10})`;
-            ctx.stroke();
-        }
+        
         ctx.restore();
     }
 }
 
-// Sun class with bouncing
+// Sun class with better movement
 class Sun {
     constructor() {
-        this.x = Math.random() * (canvas.width - 30) + 15;
-        this.y = -20; // Start above screen
-        this.size = 30;
-        this.speedY = 1 + Math.random() * 1; // Slower fall (1–2)
-        this.speedX = (Math.random() - 0.5) * 2; // Horizontal bounce (-1 to 1)
+        this.size = 40;
+        this.reset();
     }
+
+    reset() {
+        // Pick a random starting position outside the canvas
+        const side = Math.floor(Math.random() * 4);
+        switch(side) {
+            case 0: // top
+                this.x = Math.random() * canvas.width;
+                this.y = -this.size;
+                break;
+            case 1: // right
+                this.x = canvas.width + this.size;
+                this.y = Math.random() * canvas.height;
+                break;
+            case 2: // bottom
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + this.size;
+                break;
+            case 3: // left
+                this.x = -this.size;
+                this.y = Math.random() * canvas.height;
+                break;
+        }
+
+        // Set speed based on position relative to cone
+        const angle = Math.atan2(coneY - this.y, coneX - this.x);
+        const speed = 2;
+        this.speedX = Math.cos(angle) * speed;
+        this.speedY = Math.sin(angle) * speed;
+    }
+
     update() {
-        this.y += this.speedY; // Fall downward
-        this.x += this.speedX; // Move horizontally
-        // Bounce off left and right edges
-        if (this.x - this.size / 2 < 0) {
-            this.x = this.size / 2;
-            this.speedX = -this.speedX;
-        } else if (this.x + this.size / 2 > canvas.width) {
-            this.x = canvas.width - this.size / 2;
-            this.speedX = -this.speedX;
-        }
-        // Reset to top if off bottom
-        if (this.y > canvas.height + this.size) {
-            this.y = -20;
-            this.x = Math.random() * (canvas.width - 30) + 15;
-            this.speedX = (Math.random() - 0.5) * 2; // New horizontal speed
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        // Reset if off screen
+        if (this.x < -this.size * 2 || 
+            this.x > canvas.width + this.size * 2 || 
+            this.y < -this.size * 2 || 
+            this.y > canvas.height + this.size * 2) {
+            this.reset();
         }
     }
+
     draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
+        
+        // Draw sun rays
+        ctx.beginPath();
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const innerRadius = this.size / 2;
+            const outerRadius = this.size;
+            ctx.moveTo(
+                Math.cos(angle) * innerRadius,
+                Math.sin(angle) * innerRadius
+            );
+            ctx.lineTo(
+                Math.cos(angle) * outerRadius,
+                Math.sin(angle) * outerRadius
+            );
+        }
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Draw sun body
         ctx.beginPath();
         ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFD700'; // Golden sun
+        ctx.fillStyle = '#FFA500';
         ctx.fill();
-        // Rays
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#FFA500'; // Orange rays
-        for (let i = 0; i < 8; i++) {
-            const angle = i * Math.PI / 4;
-            ctx.moveTo(Math.cos(angle) * this.size / 2, Math.sin(angle) * this.size / 2);
-            ctx.lineTo(Math.cos(angle) * this.size, Math.sin(angle) * this.size);
-        }
-        ctx.stroke();
         ctx.restore();
     }
 }
@@ -266,6 +375,18 @@ function drawCone() {
     ctx.restore();
 }
 
+// Update movement logic
+function updatePosition() {
+    if (keys.ArrowLeft || touchControls.left) coneX -= coneSpeed;
+    if (keys.ArrowRight || touchControls.right) coneX += coneSpeed;
+    if (keys.ArrowUp || touchControls.up) coneY -= coneSpeed;
+    if (keys.ArrowDown || touchControls.down) coneY += coneSpeed;
+    
+    // Keep the cone within bounds
+    coneX = Math.max(coneSize/2, Math.min(canvas.width - coneSize/2, coneX));
+    coneY = Math.max(coneSize/2, Math.min(canvas.height - coneSize/2, coneY));
+}
+
 // Game loop
 function update() {
     if (gameOver) return;
@@ -303,12 +424,11 @@ function update() {
     suns.forEach((sun, index) => {
         sun.update();
         const dist = Math.hypot(sun.x - coneX, sun.y - coneY);
-        if (dist < scoopSize / 2 + sun.size / 2) {
-            meltTime -= 20; // Melt faster on hit
+        if (dist < (scoopSize / 2 + sun.size / 2) * 0.8) { // Slightly smaller hitbox
+            meltTime -= 15; // Reduced damage
             suns.splice(index, 1);
             spawnSun();
         }
-        // No need to check off-screen here since update() handles reset
     });
 
     // Maintain counts
